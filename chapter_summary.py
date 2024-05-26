@@ -72,23 +72,23 @@ def get_the_chapter_summary_prompt(text):
 <chapter_text>
 {text}
 </chapter_text>
-your response should be 3000 words at least
-Part 1: Dyslexia-Friendly Summary
-Please rewrite the chapter text in a way that is easier for a person with dyslexia to read and understand. Ensure that the rewritten content:
+Thank you for providing the sample chapter and additional context. I understand that the goal is to develop an agent that can effectively rewrite the content for individuals with dyslexia and ADHD, while maximizing the output within the model's token limit. To achieve this, I recommend the following adjustments to the prompt:
+
+<prompt>
+Please rewrite the given chapter text in a way that is easier for individuals with dyslexia and ADHD to read and understand. Ensure the rewritten content:
 
 1. Uses simple, clear, and concise language.
-2. Breaks down complex concepts into smaller, more manageable parts.
+2. Breaks down complex concepts into smaller, manageable parts.
 3. Utilizes bullet points, numbered lists, and short paragraphs to improve readability.
-4. Includes suggestions for visual aids such as diagrams, illustrations, or flowcharts to support understanding. Describe these suggestions within [Visual Aid: ...] brackets.
+4. Includes suggestions for visual aids (e.g., diagrams, illustrations, or flowcharts) to support understanding, described within [Visual Aid: ...] brackets.
 5. Emphasizes key terms, definitions, and important concepts using *bold text*.
 6. Provides explicit connections between ideas and concepts to maintain coherence.
 7. Offers examples and analogies to relate new information to familiar concepts.
 8. Maintains the core information and learning objectives of the original chapter.
 
-Please ensure that the rewritten chapter is comprehensive and does not omit any essential information. Enclose the dyslexia-friendly summary within <dyslexia_friendly_summary> tags.
+Please ensure the rewritten chapter is comprehensive and does not omit essential information. If the rewritten content exceeds the token limit, prioritize the most critical information and concepts.
 
-Part 2: Learning Questions
-After providing the dyslexia-friendly summary, please generate a list of questions to check the reader's understanding of the chapter. Include a mix of easy, medium, and complex questions. Organize the questions in the following format:
+After providing the rewritten chapter, generate a list of questions to check the reader's understanding, including a mix of easy, medium, and complex questions. Organize the questions as follows:
 
 <questions>
 Easy:
@@ -107,12 +107,13 @@ Complex:
 ...
 </questions>
 
-Please make sure to generate as many questions as possible to comprehensively assess the reader's understanding of the chapter.
+Generate as many questions as possible within the token limit to assess the reader's understanding of the chapter comprehensively.
+</prompt>
 """
 
 
 # User input for chapter locations and number of chapters to process
-input_folder = "data/split_books/Mark L. Knapp, Judith A. Hall, Terrence G. Horgan - Nonverbal Communication in Human Interaction (2013, Wadsworth Publishing).pdf"
+input_folder = "data/Nonverbal Communication in Human Interaction.pdf"
 num_chapters = 4
 file_format = "txt"
 
