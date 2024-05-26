@@ -1,4 +1,5 @@
 import os
+import re
 
 from abc import ABC, abstractmethod
 
@@ -37,7 +38,7 @@ class ApiClient(ABC):
                 Here is the chapter text to rewrite for individuals with dyslexia:
 
                 <chapter_text>
-                {{text}}
+                {text}
                 </chapter_text>
 
                 Please rewrite the chapter text following these guidelines:
@@ -177,33 +178,49 @@ class PdfSummarizer:
 
         # Define styles
         styles = getSampleStyleSheet()
-        heading_style = styles["Heading1"]
+        heading1_style = styles["Heading1"]
+        heading2_style = styles["Heading2"]
+        heading3_style = styles["Heading3"]
         normal_style = styles["Normal"]
         bullet_style = styles["Bullet"]
         bullet_style.leftIndent = 20
         bullet_style.spaceAfter = 10
 
-        # Add the chapter name as a heading
-        chapter_name = os.path.splitext(os.path.basename(file_path))[0]
-        elements.append(Paragraph(chapter_name, heading_style))
-        elements.append(Spacer(1, 12))  # Add some space after the heading
-
         # Split the summary into sections
-        sections = summary.split("\n\n")
+        sections = summary.split("\n")
         for section in sections:
-            if section.startswith("*"):
-                # Add bullet points
-                bullet_points = section.split("\n")
-                for bullet_point in bullet_points:
-                    elements.append(Paragraph(bullet_point[2:], bullet_style))
+            if section.startswith("## "):
+                # Add main headings (Heading1)
+                elements.append(Paragraph(section[3:], heading1_style))
+                elements.append(Spacer(1, 12))  # Add some space after the heading
+            elif section.startswith("### "):
+                # Add subheadings (Heading2)
+                elements.append(Paragraph(section[4:], heading2_style))
+                elements.append(Spacer(1, 12))  # Add some space after the subheading
+            elif section.startswith("#### "):
+                # Add sub-subheadings (Heading3)
+                elements.append(Paragraph(section[5:], heading3_style))
+                elements.append(Spacer(1, 12))  # Add some space after the sub-subheading
             else:
-                # Add normal paragraphs
-                elements.append(Paragraph(section, normal_style))
-            elements.append(Spacer(1, 12))  # Add some space between sections
+                # Split the section into chunks based on special characters
+                chunks = re.split(r'(\*\*.*?\*\*|\*.*?\*|• .*)', section)
+                for chunk in chunks:
+                    if chunk.startswith("**") and chunk.endswith("**"):
+                        # Add bold text
+                        elements.append(Paragraph(chunk[2:-2], normal_style))
+                    elif chunk.startswith("*") and chunk.endswith("*"):
+                        # Add italic text
+                        elements.append(Paragraph(chunk[1:-1], normal_style))
+                    elif chunk.startswith("• "):
+                        # Add bullet points
+                        elements.append(Paragraph(chunk[2:], bullet_style))
+                    elif chunk.strip():
+                        # Add normal paragraphs
+                        elements.append(Paragraph(chunk, normal_style))
+                elements.append(Spacer(1, 12))  # Add some space between sections
 
         # Build the PDF
         doc.build(elements)
-
 
 def main():
     # Choose the API client
