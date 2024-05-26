@@ -72,7 +72,7 @@ def get_the_chapter_summary_prompt(text):
 <chapter_text>
 {text}
 </chapter_text>
-
+your response should be 3000 words at least
 Part 1: Dyslexia-Friendly Summary
 Please rewrite the chapter text in a way that is easier for a person with dyslexia to read and understand. Ensure that the rewritten content:
 
@@ -113,11 +113,11 @@ Please make sure to generate as many questions as possible to comprehensively as
 
 # User input for chapter locations and number of chapters to process
 input_folder = "data/split_books/Mark L. Knapp, Judith A. Hall, Terrence G. Horgan - Nonverbal Communication in Human Interaction (2013, Wadsworth Publishing).pdf"
-num_chapters = 1
+num_chapters = 4
 file_format = "txt"
 
 chapter_locations = [
-    os.path.join(input_folder, f"chapter {i}.pdf") for i in range(6, 6 + num_chapters)
+    os.path.join(input_folder, f"chapter {i}.pdf") for i in range(7, 7 + num_chapters)
 ]
 # Process chapters and generate summaries
 
