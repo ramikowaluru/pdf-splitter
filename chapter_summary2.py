@@ -34,31 +34,37 @@ class ApiClient(ABC):
     @staticmethod
     def get_summary_prompt(text):
         return f"""
+                Here is the chapter text to rewrite for individuals with dyslexia:
+
                 <chapter_text>
-                {text}
+                {{text}}
                 </chapter_text>
-                Thank you for providing the sample chapter and additional context. I understand that the goal is to develop an agent that can effectively rewrite the content for individuals with dyslexia and ADHD, while maximizing the output within the model's token limit. To achieve this, I recommend the following adjustments to the prompt:
 
-                <prompt>
-                Please rewrite the given chapter text in a way that is easier for individuals with dyslexia and ADHD to read and understand. Ensure the rewritten content:
+                Please rewrite the chapter text following these guidelines:
 
-                1. Uses simple, clear, and concise language.
-                2. Breaks down complex concepts into smaller, manageable parts.
-                3. Utilizes bullet points, numbered lists, and short paragraphs to improve readability.
-                4. Includes suggestions for visual aids (e.g., diagrams, illustrations, or flowcharts) to support understanding, described within [Visual Aid: ...] brackets.
-                5. Emphasizes key terms, definitions, and important concepts using *bold text*.
-                6. Provides explicit connections between ideas and concepts to maintain coherence.
-                7. Offers examples and analogies to relate new information to familiar concepts.
-                8. Maintains the core information and learning objectives of the original chapter.
+                1. Use simple, clear, and concise language.
+                2. Break down complex concepts into smaller, manageable parts. 
+                3. Utilize bullet points, numbered lists, and short paragraphs to improve readability.
+                4. Include suggestions for visual aids (e.g., diagrams, illustrations, or flowcharts) to support understanding, described within [Visual Aid: ...] brackets.
+                5. Emphasize key terms, definitions, and important concepts using *bold text*.
+                6. Provide explicit connections between ideas and concepts to maintain coherence.
+                7. Offer examples and analogies to relate new information to familiar concepts.
+                8. Maintain the core information and learning objectives of the original chapter.
 
-                Please ensure the rewritten chapter is comprehensive and does not omit essential information. If the rewritten content exceeds the token limit, prioritize the most critical information and concepts.
+                Before rewriting, use the scratchpad to plan out how you will restructure and simplify the content:
 
-                After providing the rewritten chapter, generate a list of questions to check the reader's understanding, including a mix of easy, medium, and complex questions. Organize the questions as follows:
+                <scratchpad>
+                (Plan your rewrite here, breaking down the process into steps if needed)
+                </scratchpad>
+
+                Now, rewrite the chapter text according to the guidelines and your plan. Ensure the rewritten content is comprehensive and does not omit essential information. If the rewritten content exceeds the token limit, prioritize the most critical information and concepts.
+
+                After rewriting the chapter, generate a list of questions to check the reader's understanding. Include a mix of easy, medium, and complex questions. Format the questions like this:
 
                 <questions>
                 Easy:
                 1. [Question 1]
-                2. [Question 2]
+                2. [Question 2] 
                 ...
 
                 Medium:
@@ -66,14 +72,13 @@ class ApiClient(ABC):
                 2. [Question 2]
                 ...
 
-                Complex:
+                Complex: 
                 1. [Question 1]
                 2. [Question 2]
                 ...
                 </questions>
 
-                Generate as many questions as possible within the token limit to assess the reader's understanding of the chapter comprehensively.
-                </prompt>
+                Generate as many questions as possible within the token limit to thoroughly assess the reader's comprehension of the rewritten chapter.
                 """
 
 
@@ -174,6 +179,9 @@ class PdfSummarizer:
         styles = getSampleStyleSheet()
         heading_style = styles["Heading1"]
         normal_style = styles["Normal"]
+        bullet_style = styles["Bullet"]
+        bullet_style.leftIndent = 20
+        bullet_style.spaceAfter = 10
 
         # Add the chapter name as a heading
         chapter_name = os.path.splitext(os.path.basename(file_path))[0]
@@ -183,8 +191,14 @@ class PdfSummarizer:
         # Split the summary into sections
         sections = summary.split("\n\n")
         for section in sections:
-            # Add each section as a paragraph
-            elements.append(Paragraph(section, normal_style))
+            if section.startswith("*"):
+                # Add bullet points
+                bullet_points = section.split("\n")
+                for bullet_point in bullet_points:
+                    elements.append(Paragraph(bullet_point[2:], bullet_style))
+            else:
+                # Add normal paragraphs
+                elements.append(Paragraph(section, normal_style))
             elements.append(Spacer(1, 12))  # Add some space between sections
 
         # Build the PDF
