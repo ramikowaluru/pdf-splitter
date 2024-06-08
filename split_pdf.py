@@ -1,5 +1,5 @@
+# please curate this working code
 from PyPDF2 import PdfReader, PdfWriter
-
 import os
 
 def split_pdf_by_chapters(input_pdf, output_folder, splits):
@@ -13,45 +13,50 @@ def split_pdf_by_chapters(input_pdf, output_folder, splits):
         splits (dict): A dictionary where keys are chapter names and values are
                       page ranges as strings (e.g., "3-28", "31-54").
     """
+    # Create the output folder if it doesn't exist
+    os.makedirs(output_folder, exist_ok=True)
 
     with open(input_pdf, 'rb') as infile:
-        reader = PdfReader(infile)
+        pdf_reader = PdfReader(infile)
 
         for chapter_name, page_range in splits.items():
-            if '-' in page_range:
-                start_page, end_page = map(int, page_range.split('-'))
-            else:
-                start_page = int(page_range)
-                end_page = start_page + 1
+            start_page, end_page = parse_page_range(page_range)
 
             output_filename = f"{output_folder}/{chapter_name}.pdf"
-            writer = PdfWriter()
-            
+            pdf_writer = PdfWriter()
+
             for page in range(start_page - 1, end_page):
-                writer.add_page(reader.pages[page])
+                pdf_writer.add_page(pdf_reader.pages[page])
 
             with open(output_filename, 'wb') as outfile:
-                writer.write(outfile)
+                pdf_writer.write(outfile)
+
+def parse_page_range(page_range_str):
+    if '-' in page_range_str:
+        return map(int, page_range_str.split('-'))
+    else:
+        start_page = int(page_range_str)
+        return start_page, start_page + 1
 
 # Example usage:
-book_name = "Nonverbal Communication in Human Interaction.pdf"
-input_pdf_file = f"data/books/{book_name}" 
-output_directory = f"data/split_books/{book_name}"  
-chapter_splits = {
-    "chapter 1": "23-48",
-    "chapter 2": "49-78",
-    "chapter 3": "79-108",
-    "chapter 4": "111-142",
-    "chapter 5": "143-171",
-    "chapter 6": "173-216",
-    "chapter 7": "219-249",
-    "chapter 8": "250-276",
-    "chapter 9": "278-314",
-    "chapter 10": "315-342",
-    "chapter 11": "343-356",
-    "chapter 12": "359-394",
-    "chapter 13": "395-420",
-}
+book_name = "The Winding Road from the Late Teens Through the Twenties-Oxford University Press (2014).pdf"
+input_pdf_file = f"data/books/{book_name}"
+output_directory = f"data/split_books/{book_name}"
 
+chapter_splits = {
+    "chapter 1": "20-48",
+    "chapter 2": "49-67",
+    "chapter 3": "68-101",
+    "chapter 4": "102-132",
+    "chapter 5": "133-160",
+    "chapter 6": "161-187",
+    "chapter 7": "188-212",
+    "chapter 8": "213-229",
+    "chapter 9": "230-262",
+    "chapter 10": "263-284",
+    "chapter 11": "285-309",
+    "chapter 12": "310-329",
+    "chapter 13": "330-350",
+}
 
 split_pdf_by_chapters(input_pdf_file, output_directory, chapter_splits)
