@@ -16,6 +16,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import Paragraph, Spacer, SimpleDocTemplate
 
+from prompts import SUMMARY_PROMPT_ANTHROPIC_OPENAI, SUMMARY_PROMPT_GEMINI
 
 load_dotenv()
 
@@ -32,56 +33,6 @@ class ApiClient(ABC):
     def get_completion(self, prompt, model_name):
         pass
 
-    @staticmethod
-    def get_summary_prompt(text):
-        return f"""
-                Here is the chapter text to rewrite for individuals with dyslexia:
-
-                <chapter_text>
-                {text}
-                </chapter_text>
-
-                Please rewrite the chapter text following these guidelines:
-
-                1. Use simple, clear, and concise language.
-                2. Break down complex concepts into smaller, manageable parts. 
-                3. Utilize bullet points, numbered lists, and short paragraphs to improve readability.
-                4. Include suggestions for visual aids (e.g., diagrams, illustrations, or flowcharts) to support understanding, described within [Visual Aid: ...] brackets.
-                5. Emphasize key terms, definitions, and important concepts using *bold text*.
-                6. Provide explicit connections between ideas and concepts to maintain coherence.
-                7. Offer examples and analogies to relate new information to familiar concepts.
-                8. Maintain the core information and learning objectives of the original chapter.
-
-                Before rewriting, use the scratchpad to plan out how you will restructure and simplify the content:
-
-                <scratchpad>
-                (Plan your rewrite here, breaking down the process into steps if needed)
-                </scratchpad>
-
-                Now, rewrite the chapter text according to the guidelines and your plan. Ensure the rewritten content is comprehensive and does not omit essential information. If the rewritten content exceeds the token limit, prioritize the most critical information and concepts.
-
-                After rewriting the chapter, generate a list of questions to check the reader's understanding. Include a mix of easy, medium, and complex questions. Format the questions like this:
-
-                <questions>
-                Easy:
-                1. [Question 1]
-                2. [Question 2] 
-                ...
-
-                Medium:
-                1. [Question 1]
-                2. [Question 2]
-                ...
-
-                Complex: 
-                1. [Question 1]
-                2. [Question 2]
-                ...
-                </questions>
-
-                Generate as many questions as possible within the token limit to thoroughly assess the reader's comprehension of the rewritten chapter.
-                """
-
 
 class AnthropicApiClient(ApiClient):
     def __init__(self, api_key):
@@ -89,7 +40,7 @@ class AnthropicApiClient(ApiClient):
         self.client = Anthropic(api_key=self.api_key)
 
     def generate_summary(self, text, model_name):
-        prompt = self.get_summary_prompt(text)
+        prompt = SUMMARY_PROMPT_ANTHROPIC_OPENAI.format(text=text)
         return self.get_completion(prompt, model_name)
 
     def get_completion(self, prompt, model_name):
@@ -110,7 +61,7 @@ class OpenAIApiClient(ApiClient):
         openai.api_key = self.api_key
 
     def generate_summary(self, text, model_name):
-        prompt = self.get_summary_prompt(text)
+        prompt = SUMMARY_PROMPT_ANTHROPIC_OPENAI.format(text=text)
         return self.get_completion(prompt, model_name)
 
     def get_completion(self, prompt, model_name):
@@ -131,13 +82,20 @@ class GoogleApiClient(ApiClient):
         genai.configure(api_key=self.api_key)
 
     def generate_summary(self, text, model_name):
-        prompt = self.get_summary_prompt(text)
+        prompt = SUMMARY_PROMPT_GEMINI.format(text=text)
         return self.get_completion(prompt, model_name)
 
     def get_completion(self, prompt, model_name):
         model = genai.GenerativeModel(model_name)
         response = model.generate_content(prompt)
-        return response.text
+
+        if response.candidates:  # Check if there are any candidates
+            return response.text
+        else:
+            # Handle the case where no candidates are returned (e.g., log an error, retry, etc.)
+            print("Error: No candidates returned for the prompt.")
+            print("Prompt feedback:", response.prompt_feedback)
+            return None
 
 
 class PdfSummarizer:
@@ -164,6 +122,9 @@ class PdfSummarizer:
         texts = self.get_text_from_pdf(chapter_locations)
         for chapter_path, text in zip(chapter_locations, texts):
             summary = self.api_client.generate_summary(text, model_name)
+            if summary is None:
+                print(f"No summary generated for {chapter_path}. Skipping.")
+                continue
             chapter_name = os.path.splitext(os.path.basename(chapter_path))[0]
             output_file_path = os.path.join(os.path.dirname(chapter_path), f"{chapter_name}_summary.pdf")
             self.save_summary_to_pdf(summary, output_file_path)
@@ -222,6 +183,7 @@ class PdfSummarizer:
         # Build the PDF
         doc.build(elements)
 
+
 def main():
     # Choose the API client
     api_choice = 'google'
@@ -243,7 +205,7 @@ def main():
         return
 
     # User input for chapter locations and number of chapters to process
-    input_folder ="data/split_books/Nonverbal Communication in Human Interaction.pdf"
+    input_folder = "data/split_books/The Winding Road from the Late Teens Through the Twenties-Oxford University Press (2014).pdf"
     num_chapters = 13
     start_chapter = 1
 
